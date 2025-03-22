@@ -1,6 +1,6 @@
-# Nombre del archivo Python que quieres ejecutar
-SCRIPT = mi_script.py
+# Nombre del archivo Python a ejecutar
+SCRIPT = scripts/script_to_test.py
 
-# Regla para ejecutar el script
-run:
+# make para correr el script to test
+run_sc:
 	python3 $(SCRIPT)
