@@ -10,7 +10,7 @@ f_sample    = 50000000                          # Frecuencia de muestreo (44 kHz
 cycles      = 5                                 # Cantidad de ciclos a ver
 time        = ( 1 / f_input ) * cycles          # Duración en segundos
 M           = 30                                # orden del filtro
-u           = 0.01                              # tasa de aprendisaje
+u           = 0.01                              # tasa de aprendizaje
 #-----------------------------------------------------------------------------------------------#
 
 
@@ -19,19 +19,20 @@ u           = 0.01                              # tasa de aprendisaje
 #-----------------------------------------------------------------------------------------------#
 
 #------------------------------------------------#
-#----- Funcion grap -----------------------------#
+#----- Funcion grap_time_response -----------------------------#
 #------------------------------------------------#
+'''
+Funcion para graficar la señal de entrada al filtro y la señal de salida del filtro.
 
-#Funcion para graficar la señal de entrada al filtro y la señal de salida del filtro.
+Parametros de entrada:
+   input_signal    : señal de entrada con ruido a graficar
+   output_signal   : señal de salida del filtro a graficar
+   n               : cantidad de muestras a graficar
+   fi              : frecuencia de la señal de entrada a querer filtrar
+   fs              : frecuencia de la señal de muestreo
+'''
 
-#Parametros de entrada:
-#   input_signal    : señal de entrada con ruido a graficar
-#   output_signal   : señal de salida del filtro a graficar
-#   n               : cantidad de muestras a graficar
-#   fi              : frecuencia de la señal de entrada a querer filtrar
-#   fs              : frecuencia de la señal de muestreo
-
-def grap(input_signal,output_signal,n,fi,fs):
+def grap_time_response(input_signal,output_signal,n,fi,fs):
 
     n_array = np.arange(0, n, 1) 
     title = ("Señal Senoidal de " + str(fi) + " Hz Muestreada a " + str(fs/1000) + " KHz")
@@ -49,14 +50,15 @@ def grap(input_signal,output_signal,n,fi,fs):
 #------------------------------------------------#
 #----- Funcion get_muestras ---------------------#
 #------------------------------------------------#
+'''
+Funcion para obtener la cantidad de muestras a una frecuencia de muestro y 
+unas determinada cantidad de ciclos a visualizar.
 
-#Funcion para obtener la cantidad de muestras a una frecuencia de muestro y 
-#unas determinada cantidad de ciclos a visualizar.
-
-#Parametros de entrada:
-#   fs          : frecuencia de la señal de muestreo
-#   fi          : frecuencia de la señal de entrada a querer filtrar
-#   cycles      : cantidad de ciclos a visualizar
+Parametros de entrada:
+   fs          : frecuencia de la señal de muestreo
+   fi          : frecuencia de la señal de entrada a querer filtrar
+   cycles      : cantidad de ciclos a visualizar
+'''
 
 def get_muetras(fs, fi, cycles):
     cant_muestras = int (fs * (1/fi) * cycles)
@@ -65,14 +67,15 @@ def get_muetras(fs, fi, cycles):
 #------------------------------------------------#
 #----- Funcion gen_signals ----------------------#
 #------------------------------------------------#
+'''
+Funcion para obtener señal y ruido en el dominio del tiempo
 
-#Funcion para obtener señal y ruido en el dominio del tiempo
-
-#Parametros de entrada:
-#   time    : ventanan temporal de la señal
-#   fs      : frecuencia de la señal de muestreo
-#   fi      : frecuencia de la señal de entrada
-#   fn      : frecuencia de la señal de ruido
+Parametros de entrada:
+   time    : ventanan temporal de la señal
+   fs      : frecuencia de la señal de muestreo
+   fi      : frecuencia de la señal de entrada
+   fn      : frecuencia de la señal de ruido
+'''
 
 def gen_signals(time, fs, fi, fn):
     t = np.arange(0, time, 1/fs)
@@ -83,17 +86,18 @@ def gen_signals(time, fs, fi, fn):
 #------------------------------------------------#
 #----- Funcion fa_fir ---------------------------#
 #------------------------------------------------#
+'''
+Funcion para desarrollar el algoritmo LMS
 
-#Funcion para desarrollar el algoritmo LMS
+Parametros:
+   M       : Orden del filtro
+   n       : Cantidad de muestras de la señal a discretizar
+   sig_i   : Señal ruidosa de entrada
+   sig_d   : Señal de referencia
+   debug   : flag para habilitar prints de debug
+'''
 
-#Parametros:
-#   M       : Orden del filtro
-#   n       : Cantidad de muestras de la señal a discretizar
-#   sig_i   : Señal ruidosa de entrada
-#   sig_d   : Señal de referencia
-#   debug   : flag para habilitar prints de debug
-
-def fa_fir(M, n, sig_i, sig_d, debug):
+def fa_fir(M, n, sig_i, sig_d, u, debug):
     x_n = np.zeros(M)               # Entrada en 0  
     y = np.zeros(n)     # Salida del filtro
     w = np.zeros(M)                 # Coeficientes iniciales en 0
@@ -132,6 +136,6 @@ senoidal, noise = gen_signals(time, f_sample, f_input, f_noise)
 
 sen_total = senoidal + noise
         
-y,w = fa_fir(M,cant_muestras,sen_total,senoidal,0)
+y,w = fa_fir(M,cant_muestras,sen_total,senoidal,u,0)
 
-grap(sen_total, y, cant_muestras, f_input, f_sample)
+grap_time_response(sen_total,y,cant_muestras,f_input,f_sample)
