@@ -1,84 +1,113 @@
 import numpy as np
-import matplotlib.pyplot as plt # type: ignore
+import matplotlib.pyplot as plt
 
 #-----------------------------------------------------------------------------------------------#
 #---------- Parámetros -------------------------------------------------------------------------#
 #-----------------------------------------------------------------------------------------------#
-f_senoidal = 300                                    # Frecuencia de la señal senoidal (300 Hz)
-f_noise = 12345                                     # Frecuencia de ruido
-f_muestreo = 44000                                  # Frecuencia de muestreo (44 kHz)
-cantidad_ciclos = 10                                # Cantidad de ciclos a ver
-duracion = ( 1 / f_senoidal ) * cantidad_ciclos     # Duración
-M = 5                                               # orden del filtro
-u = 0.01                                            # tasa de aprendisaje
+f_input     = 30000                             # Frecuencia de la señal senoidal (300 Hz)
+f_noise     = 10000000                          # Frecuencia de ruido
+f_sample    = 50000000                          # Frecuencia de muestreo (44 kHz)
+cycles      = 5                                 # Cantidad de ciclos a ver
+time        = ( 1 / f_input ) * cycles          # Duración en segundos
+M           = 30                                # orden del filtro
+u           = 0.01                              # tasa de aprendisaje
 #-----------------------------------------------------------------------------------------------#
 
-cant_muestras = int (f_muestreo * (1/f_senoidal) * cantidad_ciclos)
 
-y = np.zeros(cant_muestras)         # Salida del filtro
-n = np.arange(0, cant_muestras, 1)  # Crea un vector desde 0 hasta n con pasos de 1
+#-----------------------------------------------------------------------------------------------#
+#--------- Funciones ---------------------------------------------------------------------------#
+#-----------------------------------------------------------------------------------------------#
 
-# Generación del vector de tiempo
-t = np.arange(0, duracion, 1/f_muestreo)
+#------------------------------------------------#
+#----- Funcion grap -----------------------------#
+#------------------------------------------------#
 
-# Señales senoidales
-senoidal =  np.sin(2 * np.pi * f_senoidal * t)
-noise = 0.1*np.sin(2 * np.pi * f_noise * t)
+#Funcion para graficar la señal de entrada al filtro y la señal de salida del friltro
 
-#iniciamos los pesos en 0
-w = np.ones(M)  # Coeficientes iniciales en 0
+#input_signal   : señal de entrada con ruido a graficar
+#output_signal  : señal de salida del filtro a graficar
+#n              : cantidad de muestras a graficar
+#fi             : frecuencia de la señal de entrada a querer filtrar
+#fs             : frecuencia de la señal de muestreo
 
-#Sumatoria total
-sen_total = senoidal + noise
+def grap(input_signal,output_signal,n,fi,fs):
 
-#Calcular el error
-err = sen_total - senoidal
+    n_array = np.arange(0, n, 1) 
+    title = ("Señal Senoidal de " + str(fi) + " Hz Muestreada a " + str(fs/1000) + " KHz")
 
-x_n = np.zeros(M)  # Entrada en 0  
+    # Graficar la señal
+    plt.figure  (figsize=(10, 5)                )
+    plt.plot    (n_array, input_signal [:n]     ) 
+    plt.plot    (n_array, output_signal         )
+    plt.title   (title                          )
+    plt.xlabel  ('Muestras'                     )
+    plt.ylabel  ('Amplitud'                     )
+    plt.grid    (True                           )
+    plt.show    (                               )
 
-for i in range(cant_muestras):
-    x_n = np.roll(x_n,1)
-    x_n[0] = sen_total[i]
+#------------------------------------------------#
+#----- Funcion get_muestras ---------------------#
+#------------------------------------------------#
 
-    y[i] = np.dot(w, x_n)                          
-    error = senoidal[i] - y[i] 
-    w = w + (u * error * x_n)
-    '''
-    if (i < 3):
-        print("---------------------------------------------")
-        print("El vector de entrada es: " + str(x_n))
-        y[i] = np.dot(w, x_n)                           # Salida del filtro
-        print("Salida: " + str(y[i]))
-        print("Salida deseada: " + str(senoidal[i]))
+def get_muetras(f_sample, f_input, cycles):
+    cant_muestras = int (f_sample * (1/f_input) * cycles)
+    return cant_muestras
+
+#------------------------------------------------#
+#----- Funcion gen_signals ----------------------#
+#------------------------------------------------#
+
+def gen_signals(time, f_sample, f_input, f_noise):
+    t = np.arange(0, time, 1/f_sample)
+    senoidal =  np.sin(2 * np.pi * f_input * t)
+    noise = 0.1*np.sin(2 * np.pi * f_noise * t)
+    return senoidal, noise
+
+#------------------------------------------------#
+#----- Funcion fa_fir ---------------------------#
+#------------------------------------------------#
+
+def fa_fir(M,cant_muestras,sen_total,senoidal):
+    x_n = np.zeros(M)               # Entrada en 0  
+    y = np.zeros(cant_muestras)     # Salida del filtro
+    w = np.zeros(M)                 # Coeficientes iniciales en 0
+
+    for i in range(cant_muestras):
+        x_n = np.roll(x_n,1)
+        x_n[0] = sen_total[i]
+
+        y[i] = np.dot(w, x_n)                          
         error = senoidal[i] - y[i] 
-        print("El error es: " + str(error))
         w = w + (u * error * x_n)
-        print("el vector de pesos en n+1: " + str(w))
-        print("---------------------------------------------")
-    '''
+        '''
+        if (i < 3):
+            print("---------------------------------------------")
+            print("El vector de entrada es: " + str(x_n))
+            y[i] = np.dot(w, x_n)                           # Salida del filtro
+            print("Salida: " + str(y[i]))
+            print("Salida deseada: " + str(senoidal[i]))
+            error = senoidal[i] - y[i] 
+            print("El error es: " + str(error))
+            w = w + (u * error * x_n)
+            print("el vector de pesos en n+1: " + str(w))
+            print("---------------------------------------------")
+        '''
+    
+    return y, w
+
+#-----------------------------------------------------------------------------------------------#
+
+
+#-----------------------------------------------------------------------------------------------#
+#--------- Main --------------------------------------------------------------------------------#
+#-----------------------------------------------------------------------------------------------#
+
+cant_muestras = get_muetras(f_sample, f_input, cycles)
+
+senoidal, noise = gen_signals(time, f_sample, f_input, f_noise)
+
+sen_total = senoidal + noise
         
+y,w = fa_fir(M,cant_muestras,sen_total,senoidal)
 
-
-## ---- Descomentar para ver coeficientes finales del filtro ----
-'''
-print("---------------------------------------------")
-print("El vector de coeficiente n: " + str(w))
-print("---------------------------------------------")
-'''
-
-## ---- Descomentar si queremos ver las dimensiones de vectores de salida ----
-'''
-print(sen_total[:cant_muestras].shape)
-print(y.shape)
-print(n.shape)
-'''
-
-# Graficar la señal
-plt.figure  (figsize=(10, 5)                )
-plt.plot    (n, sen_total[:cant_muestras]   )  # Mostrar los 3 ciclos casi completos
-plt.plot    (n, y                           )  # Mostrar los 3 ciclos casi completos
-plt.title   ("Señal Senoidal de " + str(f_senoidal) + " Hz Muestreada a " + str(f_muestreo/1000) + " KHz")
-plt.xlabel  ('Muestras'                     )
-plt.ylabel  ('Amplitud'                     )
-plt.grid    (True                           )
-plt.show    (                               )
+grap(sen_total, y, cant_muestras, f_input, f_sample)
