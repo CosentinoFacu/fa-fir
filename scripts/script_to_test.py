@@ -22,13 +22,14 @@ u           = 0.01                              # tasa de aprendisaje
 #----- Funcion grap -----------------------------#
 #------------------------------------------------#
 
-#Funcion para graficar la señal de entrada al filtro y la señal de salida del friltro
+#Funcion para graficar la señal de entrada al filtro y la señal de salida del filtro.
 
-#input_signal   : señal de entrada con ruido a graficar
-#output_signal  : señal de salida del filtro a graficar
-#n              : cantidad de muestras a graficar
-#fi             : frecuencia de la señal de entrada a querer filtrar
-#fs             : frecuencia de la señal de muestreo
+#Parametros de entrada:
+#   input_signal    : señal de entrada con ruido a graficar
+#   output_signal   : señal de salida del filtro a graficar
+#   n               : cantidad de muestras a graficar
+#   fi              : frecuencia de la señal de entrada a querer filtrar
+#   fs              : frecuencia de la señal de muestreo
 
 def grap(input_signal,output_signal,n,fi,fs):
 
@@ -49,50 +50,73 @@ def grap(input_signal,output_signal,n,fi,fs):
 #----- Funcion get_muestras ---------------------#
 #------------------------------------------------#
 
-def get_muetras(f_sample, f_input, cycles):
-    cant_muestras = int (f_sample * (1/f_input) * cycles)
+#Funcion para obtener la cantidad de muestras a una frecuencia de muestro y 
+#unas determinada cantidad de ciclos a visualizar.
+
+#Parametros de entrada:
+#   fs          : frecuencia de la señal de muestreo
+#   fi          : frecuencia de la señal de entrada a querer filtrar
+#   cycles      : cantidad de ciclos a visualizar
+
+def get_muetras(fs, fi, cycles):
+    cant_muestras = int (fs * (1/fi) * cycles)
     return cant_muestras
 
 #------------------------------------------------#
 #----- Funcion gen_signals ----------------------#
 #------------------------------------------------#
 
-def gen_signals(time, f_sample, f_input, f_noise):
-    t = np.arange(0, time, 1/f_sample)
-    senoidal =  np.sin(2 * np.pi * f_input * t)
-    noise = 0.1*np.sin(2 * np.pi * f_noise * t)
+#Funcion para obtener señal y ruido en el dominio del tiempo
+
+#Parametros de entrada:
+#   time    : ventanan temporal de la señal
+#   fs      : frecuencia de la señal de muestreo
+#   fi      : frecuencia de la señal de entrada
+#   fn      : frecuencia de la señal de ruido
+
+def gen_signals(time, fs, fi, fn):
+    t = np.arange(0, time, 1/fs)
+    senoidal =  np.sin(2 * np.pi * fi * t)
+    noise = 0.1*np.sin(2 * np.pi * fn * t)
     return senoidal, noise
 
 #------------------------------------------------#
 #----- Funcion fa_fir ---------------------------#
 #------------------------------------------------#
 
-def fa_fir(M,cant_muestras,sen_total,senoidal):
+#Funcion para desarrollar el algoritmo LMS
+
+#Parametros:
+#   M       : Orden del filtro
+#   n       : Cantidad de muestras de la señal a discretizar
+#   sig_i   : Señal ruidosa de entrada
+#   sig_d   : Señal de referencia
+#   debug   : flag para habilitar prints de debug
+
+def fa_fir(M, n, sig_i, sig_d, debug):
     x_n = np.zeros(M)               # Entrada en 0  
-    y = np.zeros(cant_muestras)     # Salida del filtro
+    y = np.zeros(n)     # Salida del filtro
     w = np.zeros(M)                 # Coeficientes iniciales en 0
 
-    for i in range(cant_muestras):
+    for i in range(n):
         x_n = np.roll(x_n,1)
-        x_n[0] = sen_total[i]
-
+        x_n[0] = sig_i[i]
         y[i] = np.dot(w, x_n)                          
-        error = senoidal[i] - y[i] 
+        error = sig_d[i] - y[i] 
         w = w + (u * error * x_n)
-        '''
-        if (i < 3):
+        
+        if (i < 3 and debug == 1):
             print("---------------------------------------------")
             print("El vector de entrada es: " + str(x_n))
             y[i] = np.dot(w, x_n)                           # Salida del filtro
             print("Salida: " + str(y[i]))
-            print("Salida deseada: " + str(senoidal[i]))
-            error = senoidal[i] - y[i] 
+            print("Salida deseada: " + str(sig_d[i]))
+            error = sig_d[i] - y[i] 
             print("El error es: " + str(error))
             w = w + (u * error * x_n)
             print("el vector de pesos en n+1: " + str(w))
             print("---------------------------------------------")
-        '''
-    
+        
     return y, w
 
 #-----------------------------------------------------------------------------------------------#
@@ -108,6 +132,6 @@ senoidal, noise = gen_signals(time, f_sample, f_input, f_noise)
 
 sen_total = senoidal + noise
         
-y,w = fa_fir(M,cant_muestras,sen_total,senoidal)
+y,w = fa_fir(M,cant_muestras,sen_total,senoidal,0)
 
 grap(sen_total, y, cant_muestras, f_input, f_sample)
