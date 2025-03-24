@@ -34,12 +34,15 @@ Parametros de entrada:
 
 def grap_time_response(input_signal,output_signal,n,fi,fs):
 
-    n_array = np.arange(0, n, 1) 
+    n_array = np.arange(0, len(input_signal), 1) 
     title = ("Señal Senoidal de " + str(fi) + " Hz Muestreada a " + str(fs/1000) + " KHz")
+
+    print(len(n_array))
+    print(len(output_signal))
 
     # Graficar la señal
     plt.figure  (figsize=(10, 5)                )
-    plt.plot    (n_array, input_signal [:n]     ) 
+    plt.plot    (n_array, input_signal          ) 
     plt.plot    (n_array, output_signal         )
     plt.title   (title                          )
     plt.xlabel  ('Muestras'                     )
@@ -99,7 +102,7 @@ Parametros:
 
 def fa_fir(M, n, sig_i, sig_d, u, debug):
     x_n = np.zeros(M)               # Entrada en 0  
-    y = np.zeros(n)     # Salida del filtro
+    y = np.zeros(len(sig_i))     # Salida del filtro
     w = np.zeros(M)                 # Coeficientes iniciales en 0
 
     for i in range(n):
@@ -123,6 +126,49 @@ def fa_fir(M, n, sig_i, sig_d, u, debug):
         
     return y, w
 
+#------------------------------------------------#
+#----- Funcion grap_spectrum --------------------#
+#------------------------------------------------#
+
+def grap_spectrum():
+    print("entre a la funcion")
+
+    fft_result = np.fft.fft(sen_total)  # Computar la FFT
+    print(type(fft_result))
+    print(sen_total.shape)
+    print(fft_result.shape)
+    N = len(fft_result)
+    fft_p = fft_result[:N//2 + 1]
+    print(fft_p.shape)
+    frequencies = np.fft.fftfreq(N, d=1/f_sample)
+    # Graficar
+    plt.figure(figsize=(10,5))
+    plt.plot(frequencies[:N//2 + 1], (np.abs(fft_p))/N,'o-')
+    plt.title("Espectro de la Señal")
+    plt.xlabel("Frecuencia (Hz)")
+    plt.ylabel("Magnitud")
+    plt.grid()
+    plt.legend()
+    plt.show()
+
+    fft_result = np.fft.fft(y)  # Computar la FFT
+    print(type(fft_result))
+    print(y.shape)
+    print(fft_result.shape)
+    N = len(fft_result)
+    fft_p = fft_result[:N//2 + 1]
+    print(fft_p.shape)
+    frequencies = np.fft.fftfreq(N, d=1/f_sample)
+    # Graficar
+    plt.figure(figsize=(10,5))
+    plt.plot(frequencies[:N//2 + 1], (np.abs(fft_p))/N,'o-')
+    plt.title("Espectro de la Señal")
+    plt.xlabel("Frecuencia (Hz)")
+    plt.ylabel("Magnitud")
+    plt.grid()
+    plt.legend()
+    plt.show()
+
 #-----------------------------------------------------------------------------------------------#
 
 
@@ -139,3 +185,5 @@ sen_total = senoidal + noise
 y,w = fa_fir(M,cant_muestras,sen_total,senoidal,u,0)
 
 grap_time_response(sen_total,y,cant_muestras,f_input,f_sample)
+
+grap_spectrum()
