@@ -4,10 +4,10 @@ import matplotlib.pyplot as plt
 #-----------------------------------------------------------------------------------------------#
 #---------- Parámetros -------------------------------------------------------------------------#
 #-----------------------------------------------------------------------------------------------#
-f_input     = 30000                             # Frecuencia de la señal senoidal (300 Hz)
+f_input     = 30000.00                          # Frecuencia de la señal senoidal (300 Hz)
 f_noise     = 10000000                          # Frecuencia de ruido
 f_sample    = 50000000                          # Frecuencia de muestreo (44 kHz)
-cycles      = 5                                 # Cantidad de ciclos a ver
+cycles      = 3                                 # Cantidad de ciclos a ver
 time        = ( 1 / f_input ) * cycles          # Duración en segundos
 M           = 30                                # orden del filtro
 u           = 0.01                              # tasa de aprendizaje
@@ -17,55 +17,6 @@ u           = 0.01                              # tasa de aprendizaje
 #-----------------------------------------------------------------------------------------------#
 #--------- Funciones ---------------------------------------------------------------------------#
 #-----------------------------------------------------------------------------------------------#
-
-#------------------------------------------------#
-#----- Funcion grap_time_response -----------------------------#
-#------------------------------------------------#
-'''
-Funcion para graficar la señal de entrada al filtro y la señal de salida del filtro.
-
-Parametros de entrada:
-   input_signal    : señal de entrada con ruido a graficar
-   output_signal   : señal de salida del filtro a graficar
-   n               : cantidad de muestras a graficar
-   fi              : frecuencia de la señal de entrada a querer filtrar
-   fs              : frecuencia de la señal de muestreo
-'''
-
-def grap_time_response(input_signal,output_signal,n,fi,fs):
-
-    n_array = np.arange(0, len(input_signal), 1) 
-    title = ("Señal Senoidal de " + str(fi) + " Hz Muestreada a " + str(fs/1000) + " KHz")
-
-    print(len(n_array))
-    print(len(output_signal))
-
-    # Graficar la señal
-    plt.figure  (figsize=(10, 5)                )
-    plt.plot    (n_array, input_signal          ) 
-    plt.plot    (n_array, output_signal         )
-    plt.title   (title                          )
-    plt.xlabel  ('Muestras'                     )
-    plt.ylabel  ('Amplitud'                     )
-    plt.grid    (True                           )
-    plt.show    (                               )
-
-#------------------------------------------------#
-#----- Funcion get_muestras ---------------------#
-#------------------------------------------------#
-'''
-Funcion para obtener la cantidad de muestras a una frecuencia de muestro y 
-unas determinada cantidad de ciclos a visualizar.
-
-Parametros de entrada:
-   fs          : frecuencia de la señal de muestreo
-   fi          : frecuencia de la señal de entrada a querer filtrar
-   cycles      : cantidad de ciclos a visualizar
-'''
-
-def get_muetras(fs, fi, cycles):
-    cant_muestras = int (fs * (1/fi) * cycles)
-    return cant_muestras
 
 #------------------------------------------------#
 #----- Funcion gen_signals ----------------------#
@@ -84,7 +35,7 @@ def gen_signals(time, fs, fi, fn):
     t = np.arange(0, time, 1/fs)
     senoidal =  np.sin(2 * np.pi * fi * t)
     noise = 0.1*np.sin(2 * np.pi * fn * t)
-    return senoidal, noise
+    return senoidal, noise, t
 
 #------------------------------------------------#
 #----- Funcion fa_fir ---------------------------#
@@ -100,12 +51,12 @@ Parametros:
    debug   : flag para habilitar prints de debug
 '''
 
-def fa_fir(M, n, sig_i, sig_d, u, debug):
+def fa_fir(M, sig_i, sig_d, u, debug):
     x_n = np.zeros(M)               # Entrada en 0  
-    y = np.zeros(len(sig_i))     # Salida del filtro
+    y = np.zeros(len(sig_i))        # Salida del filtro
     w = np.zeros(M)                 # Coeficientes iniciales en 0
 
-    for i in range(n):
+    for i in range(len(sig_i)):
         x_n = np.roll(x_n,1)
         x_n[0] = sig_i[i]
         y[i] = np.dot(w, x_n)                          
@@ -127,46 +78,64 @@ def fa_fir(M, n, sig_i, sig_d, u, debug):
     return y, w
 
 #------------------------------------------------#
-#----- Funcion grap_spectrum --------------------#
+#----- Funcion get_spectrum ---------------------#
 #------------------------------------------------#
 
-def grap_spectrum():
-    print("entre a la funcion")
+def get_spectrum(sig_i,sig_o,fs):
+    
+    fft_result = np.fft.fft(sig_i)                                  # Calculamos DFT
+    freq = (np.arange(len(fft_result)//2 + 1 )) * (fs/len(sig_i))   # Calculamos vector f  
+    N = len(fft_result)                                             # Cantidad de puntos de la DFT
+    fft_i_p = fft_result                                            # Obtenemos solo la parte positiva + DC                                   
 
-    fft_result = np.fft.fft(sen_total)  # Computar la FFT
-    print(type(fft_result))
-    print(sen_total.shape)
-    print(fft_result.shape)
-    N = len(fft_result)
-    fft_p = fft_result[:N//2 + 1]
-    print(fft_p.shape)
-    frequencies = np.fft.fftfreq(N, d=1/f_sample)
-    # Graficar
-    plt.figure(figsize=(10,5))
-    plt.plot(frequencies[:N//2 + 1], (np.abs(fft_p))/N,'o-')
-    plt.title("Espectro de la Señal")
-    plt.xlabel("Frecuencia (Hz)")
-    plt.ylabel("Magnitud")
-    plt.grid()
-    plt.legend()
-    plt.show()
+    fft_result = np.fft.fft(sig_o)                                  # Calculamos DFT
+    freq = (np.arange(len(fft_result)//2 + 1 )) * (fs/len(sig_o))   # Calculamos vector f  
+    N = len(fft_result)                                             # Cantidad de puntos de la DFT
+    fft_o_p = fft_result                                            # Obtenemos solo la parte positiva + DC                                   
 
-    fft_result = np.fft.fft(y)  # Computar la FFT
-    print(type(fft_result))
-    print(y.shape)
-    print(fft_result.shape)
-    N = len(fft_result)
-    fft_p = fft_result[:N//2 + 1]
-    print(fft_p.shape)
-    frequencies = np.fft.fftfreq(N, d=1/f_sample)
-    # Graficar
-    plt.figure(figsize=(10,5))
-    plt.plot(frequencies[:N//2 + 1], (np.abs(fft_p))/N,'o-')
-    plt.title("Espectro de la Señal")
-    plt.xlabel("Frecuencia (Hz)")
-    plt.ylabel("Magnitud")
-    plt.grid()
-    plt.legend()
+    return fft_i_p, fft_o_p, freq
+
+
+#------------------------------------------------#
+#----- Funcion graph ----------------------------#
+#------------------------------------------------#
+
+def graph(sig_i,sig_o,time,freq,fi,fs):
+
+    n_array = (np.arange(0, len(sig_i), 1)) * (1/fs) 
+    title = ("Señal Senoidal de " + str(fi) + " Hz Muestreada a " + str(fs/1000) + " KHz")
+
+    plt.figure(figsize=(8, 6))
+
+    plt.subplot (2, 2, (1, 3)                               )
+    plt.plot    (time, sig_i, label='Señal de entrada'   )
+    plt.plot    (time, sig_o, label='Señal de Salida'    )
+    plt.title   (title                                      )
+    plt.xlabel  ('Tiempo'                                   )
+    plt.ylabel  ('Amplitud'                                 )
+    plt.grid    (True                                       )
+    plt.legend  (                                           )
+
+    N = len(spectrum_i)
+
+    plt.subplot (2, 2, (2)                                      )  
+    plt.plot    (freq, 2*((np.abs(spectrum_i[:N//2+1]))/N),'o-' ) 
+    plt.title   ("Espectro de la Señal"                         )
+    plt.xlabel  ("Frecuencia (Hz)"                              )
+    plt.ylabel  ("Magnitud"                                     )
+    plt.grid    (True                                           )
+    plt.legend  (                                               )
+
+
+    plt.subplot (2, 2, (4)                                      )
+    plt.plot    (freq, 2*((np.abs(spectrum_o[:N//2+1]))/N),'o-' )
+    plt.title   ("Espectro de la Señal"                         )
+    plt.xlabel  ("Frecuencia (Hz)"                              )
+    plt.ylabel  ("Magnitud"                                     )
+    plt.grid    (True                                           )
+    plt.legend  (                                               )
+
+    plt.tight_layout()
     plt.show()
 
 #-----------------------------------------------------------------------------------------------#
@@ -176,14 +145,12 @@ def grap_spectrum():
 #--------- Main --------------------------------------------------------------------------------#
 #-----------------------------------------------------------------------------------------------#
 
-cant_muestras = get_muetras(f_sample, f_input, cycles)
-
-senoidal, noise = gen_signals(time, f_sample, f_input, f_noise)
+senoidal, noise, t_array = gen_signals(time, f_sample, f_input, f_noise)
 
 sen_total = senoidal + noise
         
-y,w = fa_fir(M,cant_muestras,sen_total,senoidal,u,0)
+y,w = fa_fir(M,sen_total,senoidal,u,0)
 
-grap_time_response(sen_total,y,cant_muestras,f_input,f_sample)
+spectrum_i,spectrum_o, freq = get_spectrum(sen_total,y,f_sample)
 
-grap_spectrum()
+graph(sen_total,y,t_array,freq,f_input,f_sample)
