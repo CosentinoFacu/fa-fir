@@ -25,10 +25,15 @@ u           = 0.01                              # tasa de aprendizaje
 Funcion para obtener señal y ruido en el dominio del tiempo
 
 Parametros de entrada:
-   time    : ventanan temporal de la señal
-   fs      : frecuencia de la señal de muestreo
-   fi      : frecuencia de la señal de entrada
-   fn      : frecuencia de la señal de ruido
+   time         : ventanan temporal de la señal
+   fs           : frecuencia de la señal de muestreo
+   fi           : frecuencia de la señal de entrada
+   fn           : frecuencia de la señal de ruido
+
+Parametros de salida:
+    senoidal    : vector de la señal senoidal deseada
+    noise       : vector de ruido que se le sumara a la señal deseada
+    t           : vector de tiempo de las señales
 '''
 
 def gen_signals(time, fs, fi, fn):
@@ -43,12 +48,16 @@ def gen_signals(time, fs, fi, fn):
 '''
 Funcion para desarrollar el algoritmo LMS
 
-Parametros:
+Parametros de entrada:
    M       : Orden del filtro
-   n       : Cantidad de muestras de la señal a discretizar
    sig_i   : Señal ruidosa de entrada
    sig_d   : Señal de referencia
+   u       : Taza de aprendisaje
    debug   : flag para habilitar prints de debug
+
+Parametros de salida:
+    y       : Vector con la respuesta en el tiempo del filtro
+    w       : Vector de coeficientes del filtro
 '''
 
 def fa_fir(M, sig_i, sig_d, u, debug):
@@ -81,24 +90,55 @@ def fa_fir(M, sig_i, sig_d, u, debug):
 #----- Funcion get_spectrum ---------------------#
 #------------------------------------------------#
 
+'''
+Funcion para obtener la repuesta en el dominio de la frecuencia
+
+Parametros de entrada:
+   sig_i    : Señal ruidosa de entrada
+   sig_o    : Señal de referencia
+   fs       : frecuencia de la señal de muestreo
+
+Parametros de salida:
+    fft_i   :  Vector con la respuesta en frecuecia de la señal sig_i
+    fft_o   :  Vector con la respuesta en frecuecia de la señal sig_o
+    freq    :  Vector con frecuencia correspondientes a dicha respuesta
+
+--------------------------------------------------
+NOTA: sig_i y sig_o debe tener la misma longuitud.
+--------------------------------------------------
+'''
+
 def get_spectrum(sig_i,sig_o,fs):
     
     fft_result = np.fft.fft(sig_i)                                  # Calculamos DFT
     freq = (np.arange(len(fft_result)//2 + 1 )) * (fs/len(sig_i))   # Calculamos vector f  
-    N = len(fft_result)                                             # Cantidad de puntos de la DFT
-    fft_i_p = fft_result                                            # Obtenemos solo la parte positiva + DC                                   
+    fft_i = fft_result                                            # Obtenemos solo la parte positiva + DC                                   
 
     fft_result = np.fft.fft(sig_o)                                  # Calculamos DFT
     freq = (np.arange(len(fft_result)//2 + 1 )) * (fs/len(sig_o))   # Calculamos vector f  
-    N = len(fft_result)                                             # Cantidad de puntos de la DFT
-    fft_o_p = fft_result                                            # Obtenemos solo la parte positiva + DC                                   
+    fft_o = fft_result                                            # Obtenemos solo la parte positiva + DC                                   
 
-    return fft_i_p, fft_o_p, freq
+    return fft_i, fft_o, freq
 
 
 #------------------------------------------------#
 #----- Funcion graph ----------------------------#
 #------------------------------------------------#
+
+'''
+Funcion para graficar subplots con respuesta en el tiempo y frecuencia
+
+Parametros de entrada:
+   sig_i    : Señal ruidosa de entrada
+   sig_o    : Señal de referencia
+   time     : vector de tiempo
+   fre      : vector de frecuencia calculadas en DFT   
+   fi       : frecuencia de la señal de entrada
+   fs       : frecuencia de la señal de muestreo
+
+Parametros de salida:
+    N/A
+'''
 
 def graph(sig_i,sig_o,time,freq,fi,fs):
 
